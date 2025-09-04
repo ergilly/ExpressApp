@@ -1,0 +1,23 @@
+meta {
+  name: Create Users
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{localhost}}/users
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {"name": "Alice Johnson", "email": "alice@example.com"}
+}
+
+vars:post-response {
+  id: res.body.body.user.id
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,23 @@
+meta {
+  name: Edit User 500
+  type: http
+  seq: 15
+}
+
+put {
+  url: {{localhost}}/users/{{id}}
+  body: json
+  auth: inherit
+}
+
+headers {
+  x-force-error: 500
+}
+
+body:json {
+  {"name": "John Updated", "email": "john.updated@example.com"}
+}
+
+settings {
+  encodeUrl: true
+}

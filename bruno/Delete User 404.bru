@@ -1,0 +1,15 @@
+meta {
+  name: Delete User 404
+  type: http
+  seq: 17
+}
+
+delete {
+  url: {{localhost}}/users/999
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

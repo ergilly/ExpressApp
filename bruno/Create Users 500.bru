@@ -1,0 +1,23 @@
+meta {
+  name: Create Users 500
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{localhost}}/users
+  body: json
+  auth: inherit
+}
+
+headers {
+  x-force-error: 500
+}
+
+body:json {
+  {"name": "Alice Johnson", "email": "alice@example.com"}
+}
+
+settings {
+  encodeUrl: true
+}

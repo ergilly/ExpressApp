@@ -1,0 +1,19 @@
+meta {
+  name: Edit User 404
+  type: http
+  seq: 14
+}
+
+put {
+  url: {{localhost}}/users/999
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {"name": "John Updated", "email": "john.updated@example.com"}
+}
+
+settings {
+  encodeUrl: true
+}

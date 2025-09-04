@@ -1,0 +1,15 @@
+meta {
+  name: Users by ID 404
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{localhost}}/users/999
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

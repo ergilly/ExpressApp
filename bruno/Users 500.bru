@@ -1,0 +1,19 @@
+meta {
+  name: Users 500
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{localhost}}/users
+  body: none
+  auth: inherit
+}
+
+headers {
+  x-force-error: 500
+}
+
+settings {
+  encodeUrl: true
+}

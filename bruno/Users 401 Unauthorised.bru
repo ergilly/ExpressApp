@@ -1,0 +1,15 @@
+meta {
+  name: Users 401 Unauthorised
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{localhost}}/Users
+  body: none
+  auth: none
+}
+
+settings {
+  encodeUrl: true
+}

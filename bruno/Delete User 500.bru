@@ -1,0 +1,19 @@
+meta {
+  name: Delete User 500
+  type: http
+  seq: 18
+}
+
+delete {
+  url: {{localhost}}/users/{{id}}
+  body: none
+  auth: inherit
+}
+
+headers {
+  x-force-error: 500
+}
+
+settings {
+  encodeUrl: true
+}

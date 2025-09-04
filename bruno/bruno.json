@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "ExpressApp",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

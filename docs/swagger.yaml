@@ -1,0 +1,727 @@
+openapi: 3.0.3
+info:
+  title: Express TypeScript Test API
+  description: |
+    A simple Express.js TypeScript application with basic CRUD operations for testing frameworks.
+    
+    ## Features
+    - Bearer token authentication (accepts any token)
+    - Error simulation via headers
+    - Standard REST endpoints for user management
+    
+    ## Testing Headers
+    - `x-force-error: 500` - Forces a 500 Internal Server Error
+    - `x-force-error: true` - Forces a 500 Internal Server Error
+    - `Authorization: Bearer <any-token>` - Required for protected endpoints
+    
+  version: 1.0.0
+  contact:
+    name: Test API Support
+servers:
+  - url: http://localhost:3000
+    description: Development server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: Any Bearer token (validation only checks for presence, not validity)
+
+paths:
+  /health:
+    get:
+      summary: Health Check
+      description: |
+        Check if the server is running and healthy. This endpoint does not require authentication.
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Server is healthy and operational
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 200
+                  statusMessage:
+                    type: string
+                    example: "Server is healthy"
+                  body:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        example: "OK"
+                      timestamp:
+                        type: string
+                        format: date-time
+                        example: "2025-09-04T10:30:00.000Z"
+                      uptime:
+                        type: number
+                        description: Server uptime in seconds
+                        example: 123.456
+        '500':
+          description: Forced server error (when x-force-error header is present)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 500
+                  statusMessage:
+                    type: string
+                    example: "Internal Server Error - Forced error for testing"
+                  body:
+                    type: object
+                    properties:
+                      error:
+                        type: string
+                        example: "This is a simulated internal server error triggered by the x-force-error header"
+                      timestamp:
+                        type: string
+                        format: date-time
+                        example: "2025-09-04T10:30:00.000Z"
+                      endpoint:
+                        type: string
+                        example: "/health"
+                      method:
+                        type: string
+                        example: "GET"
+
+  /users:
+    get:
+      summary: Get All Users
+      description: |
+        Retrieve a list of all users in the system.
+        
+        **Authentication Required:** Bearer token must be provided in Authorization header.
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 200
+                  statusMessage:
+                    type: string
+                    example: "Users retrieved successfully"
+                  body:
+                    type: object
+                    properties:
+                      users:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            name:
+                              type: string
+                              example: "John Doe"
+                            email:
+                              type: string
+                              example: "john@example.com"
+                        example:
+                          - id: 1
+                            name: "John Doe"
+                            email: "john@example.com"
+                          - id: 2
+                            name: "Jane Smith"
+                            email: "jane@example.com"
+        '401':
+          description: Unauthorized - Missing or invalid authentication token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 401
+                  statusMessage:
+                    type: string
+                    example: "Unauthorized - Authentication required"
+                  body:
+                    type: object
+                    properties:
+                      error:
+                        type: string
+                        example: "Missing or invalid authorization token"
+                      message:
+                        type: string
+                        example: "Please provide a Bearer token in the Authorization header"
+        '500':
+          description: Internal server error (or forced error)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 500
+                  statusMessage:
+                    type: string
+                    example: "Internal Server Error - Forced error for testing"
+                  body:
+                    type: object
+                    properties:
+                      error:
+                        type: string
+                        example: "This is a simulated internal server error triggered by the x-force-error header"
+                      timestamp:
+                        type: string
+                        format: date-time
+                        example: "2025-09-04T10:30:00.000Z"
+                      endpoint:
+                        type: string
+                        example: "/users"
+                      method:
+                        type: string
+                        example: "GET"
+
+    post:
+      summary: Create New User
+      description: |
+        Create a new user with the provided name and email.
+        
+        **Authentication Required:** Bearer token must be provided in Authorization header.
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Alice Johnson"
+                email:
+                  type: string
+                  format: email
+                  example: "alice@example.com"
+              required:
+                - name
+                - email
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 201
+                  statusMessage:
+                    type: string
+                    example: "User created successfully"
+                  body:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 3
+                          name:
+                            type: string
+                            example: "Alice Johnson"
+                          email:
+                            type: string
+                            example: "alice@example.com"
+        '400':
+          description: Bad Request - Missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 400
+                  statusMessage:
+                    type: string
+                    example: "Bad Request - Missing required fields"
+                  body:
+                    type: object
+                    properties:
+                      error:
+                        type: string
+                        example: "Name and email are required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 401
+                  statusMessage:
+                    type: string
+                    example: "Unauthorized - Authentication required"
+                  body:
+                    type: object
+                    properties:
+                      error:
+                        type: string
+                        example: "Missing or invalid authorization token"
+                      message:
+                        type: string
+                        example: "Please provide a Bearer token in the Authorization header"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 500
+                  statusMessage:
+                    type: string
+                    example: "Internal Server Error - Forced error for testing"
+                  body:
+                    type: object
+                    properties:
+                      error:
+                        type: string
+                        example: "This is a simulated internal server error triggered by the x-force-error header"
+                      timestamp:
+                        type: string
+                        format: date-time
+                        example: "2025-09-04T10:30:00.000Z"
+                      endpoint:
+                        type: string
+                        example: "/users"
+                      method:
+                        type: string
+                        example: "POST"
+
+  /users/{id}:
+    get:
+      summary: Get User by ID
+      description: |
+        Retrieve a specific user by their unique ID.
+        
+        **Authentication Required:** Bearer token must be provided in Authorization header.
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the user to retrieve
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      responses:
+        '200':
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 200
+                  statusMessage:
+                    type: string
+                    example: "User retrieved successfully"
+                  body:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: "John Doe"
+                          email:
+                            type: string
+                            example: "john@example.com"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 401
+                  statusMessage:
+                    type: string
+                    example: "Unauthorized - Authentication required"
+                  body:
+                    type: object
+                    properties:
+                      error:
+                        type: string
+                        example: "Missing or invalid authorization token"
+                      message:
+                        type: string
+                        example: "Please provide a Bearer token in the Authorization header"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 404
+                  statusMessage:
+                    type: string
+                    example: "User not found"
+                  body:
+                    type: object
+                    properties:
+                      error:
+                        type: string
+                        example: "User with id 999 does not exist"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 500
+                  statusMessage:
+                    type: string
+                    example: "Internal Server Error - Forced error for testing"
+                  body:
+                    type: object
+                    properties:
+                      error:
+                        type: string
+                        example: "This is a simulated internal server error triggered by the x-force-error header"
+                      timestamp:
+                        type: string
+                        format: date-time
+                        example: "2025-09-04T10:30:00.000Z"
+                      endpoint:
+                        type: string
+                        example: "/users/1"
+                      method:
+                        type: string
+                        example: "GET"
+
+    put:
+      summary: Update User
+      description: |
+        Update an existing user's information by their ID.
+        
+        **Authentication Required:** Bearer token must be provided in Authorization header.
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the user to update
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "John Updated"
+                email:
+                  type: string
+                  format: email
+                  example: "john.updated@example.com"
+              required:
+                - name
+                - email
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 200
+                  statusMessage:
+                    type: string
+                    example: "User updated successfully"
+                  body:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: "John Updated"
+                          email:
+                            type: string
+                            example: "john.updated@example.com"
+        '400':
+          description: Bad Request - Missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 400
+                  statusMessage:
+                    type: string
+                    example: "Bad Request - Missing required fields"
+                  body:
+                    type: object
+                    properties:
+                      error:
+                        type: string
+                        example: "Name and email are required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 401
+                  statusMessage:
+                    type: string
+                    example: "Unauthorized - Authentication required"
+                  body:
+                    type: object
+                    properties:
+                      error:
+                        type: string
+                        example: "Missing or invalid authorization token"
+                      message:
+                        type: string
+                        example: "Please provide a Bearer token in the Authorization header"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 404
+                  statusMessage:
+                    type: string
+                    example: "User not found"
+                  body:
+                    type: object
+                    properties:
+                      error:
+                        type: string
+                        example: "User with id 999 does not exist"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 500
+                  statusMessage:
+                    type: string
+                    example: "Internal Server Error - Forced error for testing"
+                  body:
+                    type: object
+                    properties:
+                      error:
+                        type: string
+                        example: "This is a simulated internal server error triggered by the x-force-error header"
+                      timestamp:
+                        type: string
+                        format: date-time
+                        example: "2025-09-04T10:30:00.000Z"
+                      endpoint:
+                        type: string
+                        example: "/users/1"
+                      method:
+                        type: string
+                        example: "PUT"
+
+    delete:
+      summary: Delete User
+      description: |
+        Remove a user from the system by their ID.
+        
+        **Authentication Required:** Bearer token must be provided in Authorization header.
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the user to delete
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      responses:
+        '200':
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 200
+                  statusMessage:
+                    type: string
+                    example: "User deleted successfully"
+                  body:
+                    type: object
+                    properties:
+                      deletedUser:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: "John Doe"
+                          email:
+                            type: string
+                            example: "john@example.com"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 401
+                  statusMessage:
+                    type: string
+                    example: "Unauthorized - Authentication required"
+                  body:
+                    type: object
+                    properties:
+                      error:
+                        type: string
+                        example: "Missing or invalid authorization token"
+                      message:
+                        type: string
+                        example: "Please provide a Bearer token in the Authorization header"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 404
+                  statusMessage:
+                    type: string
+                    example: "User not found"
+                  body:
+                    type: object
+                    properties:
+                      error:
+                        type: string
+                        example: "User with id 999 does not exist"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: integer
+                    example: 500
+                  statusMessage:
+                    type: string
+                    example: "Internal Server Error - Forced error for testing"
+                  body:
+                    type: object
+                    properties:
+                      error:
+                        type: string
+                        example: "This is a simulated internal server error triggered by the x-force-error header"
+                      timestamp:
+                        type: string
+                        format: date-time
+                        example: "2025-09-04T10:30:00.000Z"
+                      endpoint:
+                        type: string
+                        example: "/users/1"
+                      method:
+                        type: string
+                        example: "DELETE"
+
+tags:
+  - name: Health
+    description: Server health and status operations
+  - name: Users
+    description: User management operations (all require authentication)
+
+externalDocs:
+  description: View this documentation in Swagger UI
+  url: https://editor.swagger.io/
