@@ -5,7 +5,7 @@ import { startupMessage } from './utils/startup';
 
 const PORT = process.env.PORT || 3000;
 
-const createApp = () => {
+export const createApp = () => {
   const app = express();
 
   // Basic middleware
@@ -25,11 +25,13 @@ const createApp = () => {
   return app;
 };
 
-const app = createApp();
+// Only start the server if this file is run directly
+if (require.main === module) {
+  const app = createApp();
 
-// Start the server
-app.listen(PORT, () => {
-  startupMessage(PORT);
-});
+  app.listen(PORT, () => {
+    startupMessage(PORT);
+  });
+}
 
-export default app;
+export default createApp;

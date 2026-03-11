@@ -1,261 +1,243 @@
-# Express TypeScript Test App
+# @ergilly/test-api-server
 
-A simple Express.js TypeScript application with basic CRUD operations for testing frameworks. The application features a clean, modular architecture with separated concerns.
+Reusable Express + TypeScript test API server, distributed as an npm package with a CLI binary: `test-api-server`.
 
-## Project Structure
+This package is designed for test frameworks that need a predictable API with:
+- health checks
+- authenticated CRUD endpoints
+- forced error simulation for negative-path testing
 
-```
-src/
-├── app.ts                    # Main app setup and server startup
-├── data/
-│   └── userStore.ts         # In-memory data storage and operations
-├── middleware/
-│   ├── index.ts             # Middleware exports
-│   ├── auth.ts              # Authentication middleware
-│   ├── errorSimulation.ts   # Error simulation middleware
-│   ├── logger.ts            # Request logging middleware
-│   └── notFound.ts          # 404 handler middleware
-├── routes/
-│   ├── index.ts             # Route setup configuration
-│   ├── health.ts            # Health check endpoints
-│   └── users.ts             # User management endpoints
-├── types/
-│   └── index.ts             # TypeScript type definitions
-└── utils/
-    └── startup.ts           # Server startup messages
-docs/
-└── swagger.yaml             # OpenAPI 3.0 specification
+## Install
+
+### From npm registry
+```bash
+npm install --save-dev @ergilly/test-api-server
 ```
 
-## Setup
+### From GitHub
+```bash
+npm install --save-dev git+https://github.com/ergilly/ExpressApp.git
+# or specific version/tag
+npm install --save-dev git+https://github.com/ergilly/ExpressApp.git#v1.0.0
+```
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+### From local tarball
+```bash
+# In this repo
+npm pack
 
-2. Build the project:
-   ```bash
-   npm run build
-   ```
+# In your consuming project
+npm install --save-dev ./path/to/ergilly-test-api-server-1.0.0.tgz
+```
 
-3. Start the server:
-   ```bash
-   npm run dev  # Development mode with ts-node
-   # OR
-   npm start    # Production mode (requires build first)
-   ```
+## Quick Start (CLI / Bin Command)
 
-The server will start on `http://localhost:3000`
+After installation, run with the package binary:
 
-## Architecture Features
+```bash
+npx test-api-server
+```
 
-### Modular Design
-- **Separation of Concerns**: Each module has a single responsibility
-- **Middleware System**: Configurable middleware for different features
-- **Type Safety**: Full TypeScript support with proper interfaces
-- **Clean Routes**: Combined route definitions with handler logic
+Run on a custom port:
 
-### Middleware Components
-- **Request Logging**: Tracks all incoming requests with timestamps
-- **Authentication**: Bearer token validation (accepts any token)
-- **Error Simulation**: Force errors for testing via headers
-- **404 Handler**: Standardized not-found responses
+```bash
+npx test-api-server --port 3001
+# or
+npx test-api-server -p 3001
+```
 
-### Data Layer
-- **In-Memory Store**: Simple user data management
-- **CRUD Operations**: Create, Read, Update, Delete functionality
-- **Type-Safe Operations**: All operations use proper TypeScript types
+CLI help:
 
-## Setup
+```bash
+npx test-api-server --help
+```
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+## CLI Options
 
-2. Build the project:
-   ```bash
-   npm run build
-   ```
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-p, --port <number>` | Port to run the server on | `3000` |
+| `-h, --help` | Show usage/help output | — |
 
-3. Start the server:
-   ```bash
-   npm run dev  # Development mode with ts-node
-   # OR
-   npm start    # Production mode (requires build first)
-   ```
+## API Summary
 
-The server will start on `http://localhost:3000`
+Base URL: `http://localhost:<port>`
 
-## API Endpoints
+### Response envelope
 
-All responses follow the format:
 ```json
 {
   "statusCode": 200,
   "statusMessage": "Success message",
-  "body": { /* response data */ }
+  "body": {}
 }
 ```
 
-### Error Simulation
-To test error handling, you can force a 500 Internal Server Error on any endpoint by including the header:
-```
+### Authentication behavior
+
+- `GET /health` is public
+- all `/users*` routes require `Authorization: Bearer <any-token>`
+- missing/invalid bearer token returns `401`
+
+### Error simulation behavior
+
+Add either header on any endpoint to force a `500` response:
+
+```http
 x-force-error: 500
 ```
+
 or
-```
+
+```http
 x-force-error: true
 ```
 
-### Authentication
-Most endpoints require authentication. Include any Bearer token in the Authorization header:
+### Endpoints
+
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| `GET` | `/health` | No | Server health/uptime |
+| `GET` | `/users` | Yes | Get all users |
+| `GET` | `/users/:id` | Yes | Get user by ID |
+| `POST` | `/users` | Yes | Create user |
+| `PUT` | `/users/:id` | Yes | Update user |
+| `DELETE` | `/users/:id` | Yes | Delete user |
+
+## Usage in Test Frameworks
+
+### Start/stop in test setup
+
+```javascript
+const { spawn } = require('child_process');
+
+let serverProcess;
+
+before(async () => {
+  serverProcess = spawn('npx', ['test-api-server', '--port', '3001'], {
+    stdio: 'pipe'
+  });
+
+  await new Promise((resolve) => {
+    serverProcess.stdout.on('data', (data) => {
+      if (data.toString().includes('Server is running')) {
+        resolve();
+      }
+    });
+  });
+});
+
+after(() => {
+  if (serverProcess) serverProcess.kill();
+});
 ```
-Authorization: Bearer any-token-here
+
+### Programmatic usage
+
+```javascript
+const { createApp } = require('@ergilly/test-api-server');
+
+const app = createApp();
+const server = app.listen(3001);
+
+module.exports = { app, server };
 ```
 
-The `/health` endpoint does not require authentication.
+### CI example
 
-### Health Check
-- **GET** `/health` - Check server status (no auth required)
+```yaml
+- name: Start Test API Server
+  run: npx test-api-server --port 3001 &
 
-### User Management (Auth Required)
-- **GET** `/users` - Get all users
-- **GET** `/users/:id` - Get user by ID
-- **POST** `/users` - Create new user
-- **PUT** `/users/:id` - Update user by ID
-- **DELETE** `/users/:id` - Delete user by ID
+- name: Wait for server
+  run: npx wait-on http://localhost:3001/health
 
-## Example Requests
+- name: Run tests
+  run: npm test
+```
 
-### GET All Users
+## Request Examples
+
 ```bash
+# Health
+curl http://localhost:3000/health
+
+# Get users (authenticated)
 curl -H "Authorization: Bearer test-token" http://localhost:3000/users
-```
 
-### GET User by ID
-```bash
-curl -H "Authorization: Bearer test-token" http://localhost:3000/users/1
-```
-
-### POST Create User
-```bash
+# Create user
 curl -X POST http://localhost:3000/users \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer test-token" \
-  -d '{"name": "Alice Johnson", "email": "alice@example.com"}'
+  -d '{"name":"Alice Johnson","email":"alice@example.com"}'
+
+# Force a 500 for testing
+curl -H "Authorization: Bearer test-token" \
+  -H "x-force-error: 500" \
+  http://localhost:3000/users
 ```
 
-### PUT Update User
+## Local Development (this repo)
+
 ```bash
-curl -X PUT http://localhost:3000/users/1 \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer test-token" \
-  -d '{"name": "John Updated", "email": "john.updated@example.com"}'
+npm install
+npm run build
+npm run dev
 ```
 
-### DELETE User
+Useful scripts:
+- `npm run build` – compile TypeScript to `dist/`
+- `npm run start` – run compiled app (`dist/app.js`)
+- `npm run cli` – run CLI from TypeScript source
+- `npm run server` – build and start compiled app
+
+## Package Layout
+
+```text
+@ergilly/test-api-server/
+├── dist/         # Compiled JS (includes cli.js)
+├── docs/         # OpenAPI docs
+├── src/          # Source (repo only)
+├── README.md
+└── package.json
+```
+
+## Distribution Recommendation
+
+Preferred team distribution is a private npm registry so teams can pin versions and update independently.
+
+Typical workflow:
+1. update package
+2. bump version
+3. publish (`npm publish` or company registry)
+4. teams upgrade when ready
+
+## Publish to npmjs.com (Public)
+
+Run from this package root.
+
 ```bash
-curl -X DELETE http://localhost:3000/users/1 \
-  -H "Authorization: Bearer test-token"
+# 1) Authenticate
+npm login
+npm whoami
+
+# 2) Build and verify package contents
+npm run build
+npm pack --dry-run
+
+# 3) Bump version (required for every publish)
+npm version patch
+
+# 4) Publish (scoped package is configured for public access)
+npm publish
 ```
 
-### Test Authentication Failure
-```bash
-# This will return 401 Unauthorized
-curl http://localhost:3000/users
-```
-
-### Force 500 Error (for testing)
-```bash
-# Force error on any endpoint
-curl -H "x-force-error: 500" http://localhost:3000/users
-
-# Force error on POST request
-curl -X POST http://localhost:3000/users \
-  -H "Content-Type: application/json" \
-  -H "x-force-error: true" \
-  -d '{"name": "Test User", "email": "test@example.com"}'
-```
-
-## Response Examples
-
-### Successful Response
-```json
-{
-  "statusCode": 200,
-  "statusMessage": "User retrieved successfully",
-  "body": {
-    "user": {
-      "id": 1,
-      "name": "John Doe",
-      "email": "john@example.com"
-    }
-  }
-}
-```
-
-### Error Response
-```json
-{
-  "statusCode": 404,
-  "statusMessage": "User not found",
-  "body": {
-    "error": "User with id 999 does not exist"
-  }
-}
-```
-
-### 500 Error Response (when forced)
-```json
-{
-  "statusCode": 500,
-  "statusMessage": "Internal Server Error - Forced error for testing",
-  "body": {
-    "error": "This is a simulated internal server error triggered by the x-force-error header",
-    "timestamp": "2025-09-04T10:30:00.000Z",
-    "endpoint": "/users",
-    "method": "GET"
-  }
-}
-```
-
-### 401 Unauthorized Response
-```json
-{
-  "statusCode": 401,
-  "statusMessage": "Unauthorized - Authentication required",
-  "body": {
-    "error": "Missing or invalid authorization token",
-    "message": "Please provide a Bearer token in the Authorization header"
-  }
-}
-```
-
-## Development
-
-### File Organization
-- **`src/app.ts`**: Main application entry point, middleware setup, and server startup
-- **`src/data/userStore.ts`**: Centralized data operations for user management
-- **`src/middleware/`**: Reusable middleware components for different concerns
-- **`src/routes/`**: Route definitions with inline request handlers
-- **`src/types/`**: TypeScript interfaces and type definitions
-- **`src/utils/`**: Utility functions and helpers
-
-### Adding New Features
-1. **New Endpoint**: Add routes in appropriate route file (`src/routes/`)
-2. **New Middleware**: Create in `src/middleware/` and export from index
-3. **Data Operations**: Extend `src/data/userStore.ts` or create new store
-4. **Types**: Add interfaces to `src/types/index.ts`
-
-### Development Workflow
-- Source files are in `src/`
-- Built files go to `dist/`
-- Use `npm run dev` for development with auto-reload
-- Use `npm run build` to compile TypeScript to JavaScript
+Notes:
+- package name must stay unique: `@ergilly/test-api-server`
+- if npm returns version conflict, bump version and publish again
+- verify after publish: `npm view @ergilly/test-api-server version`
 
 ## Documentation
 
-- **API Documentation**: See `docs/swagger.yaml` for complete OpenAPI specification
-- **Swagger UI**: View at [https://editor.swagger.io/](https://editor.swagger.io/) by pasting the YAML content
+- OpenAPI spec: `docs/swagger.yaml`
+- API collection: `bruno/`
