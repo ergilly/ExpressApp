@@ -1,17 +1,60 @@
 {
-  "name": "expressapp",
+  "name": "@ergilly/test-api-server",
   "version": "1.0.0",
+  "description": "A simple Express TypeScript API server for testing frameworks with CRUD operations and authentication",
   "main": "dist/app.js",
+  "types": "dist/app.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/app.d.ts",
+      "require": "./dist/app.js",
+      "default": "./dist/app.js"
+    }
+  },
+  "bin": {
+    "test-api-server": "dist/cli.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist/**/*",
+    "docs/**/*",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "start": "node dist/app.js",
+    "start:dev": "ts-node src/app.ts",
     "dev": "ts-node src/app.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "cli": "ts-node src/cli.ts",
+    "cli:help": "ts-node src/cli.ts --help",
+    "server": "npm run build && npm run start",
+    "server:dev": "npm run start:dev",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublishOnly": "npm run build",
+    "postinstall": "echo \"📚 Test API Server installed! Run 'npx test-api-server --help' for usage.\""
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "Simple Express TypeScript app for testing",
+  "keywords": [
+    "test",
+    "api",
+    "server",
+    "express",
+    "typescript",
+    "testing",
+    "framework",
+    "crud",
+    "authentication"
+  ],
+  "author": "Your Company",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ergilly/ExpressApp.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "express": "^5.1.0"
   },
