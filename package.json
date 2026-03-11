@@ -50,7 +50,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ergilly/ExpressApp.git"
+    "url": "https://github.com/ergilly/expressApp.git"
   },
   "engines": {
     "node": ">=18.0.0"
